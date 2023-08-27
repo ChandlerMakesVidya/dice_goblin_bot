@@ -3,6 +3,7 @@ from discord.ext import commands
 import operator
 import json
 import rolldice
+import asyncio
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -21,6 +22,10 @@ async def helpme(ctx):
 
 @bot.command(name='init')
 async def initiative(ctx, *args):
+    if len(args) < 1:
+        await ctx.send('PUT SOMETHING IN DUMBASS')
+        return
+
     if args[0] == "order":
         await ctx.send('HERE IS INITIATIVE ORDER')
         sorted_initiative_order = dict(
@@ -30,18 +35,14 @@ async def initiative(ctx, *args):
             init_order_string += f'{i}: {sorted_initiative_order[i]}\n'
         await ctx.send(init_order_string)
         return
+
     if args[0] == 'reset':
         initiative_order.clear()
-        await ctx.send('INITIATIVE RESET')
+        await ctx.send('INITIATIVE GONE. NO MORE INITIATIVE')
         return
 
-    if len(args) < 1:
-        await ctx.send('PUT SOMETHING IN DUMBASS')
-        return
-    number = args[0]
-    if not number.isdigit():
-        await ctx.send(f'{number} IS NOT NUMBER DUMBASS')
-        return
+    number, explanation = roll_dice(args[0])
+    await ctx.send(explanation)
     number = int(number)
     name = ctx.author if len(args) < 2 else ' '.join(args[1:])
     initiative_order[name] = number
@@ -53,7 +54,14 @@ async def roll(ctx, *args):
     if len(args) < 1:
         await ctx.send('ROLL WHAT?')
         return
-    result, explanation = rolldice.roll_dice(''.join(args))
-    await ctx.send(f'YOU ROLLED {result} FROM {explanation}')
+    result, explanation = roll_dice(''.join(args))
+    await ctx.send(explanation)
+
+
+def roll_dice(input):
+    result, breakdown = rolldice.roll_dice(input)
+    explanation = f'YOU ROLLED {result} from {breakdown}'
+    return result, explanation
+
 
 bot.run(config['token'])
