@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import operator
 import json
+import rolldice
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -18,14 +19,22 @@ async def helpme(ctx):
     await ctx.send('NO ONE COMING TO HELP')
 
 
-@bot.command(name='initreset')
-async def initiative_start(ctx):
-    initiative_order.clear()
-    await ctx.send('INITIATIVE RESET')
-
-
 @bot.command(name='init')
 async def initiative(ctx, *args):
+    if args[0] == "order":
+        await ctx.send('HERE IS INITIATIVE ORDER')
+        sorted_initiative_order = dict(
+            sorted(initiative_order.items(), key=operator.itemgetter(1), reverse=True))
+        init_order_string = ""
+        for i in sorted_initiative_order:
+            init_order_string += f'{i}: {sorted_initiative_order[i]}\n'
+        await ctx.send(init_order_string)
+        return
+    if args[0] == 'reset':
+        initiative_order.clear()
+        await ctx.send('INITIATIVE RESET')
+        return
+
     if len(args) < 1:
         await ctx.send('PUT SOMETHING IN DUMBASS')
         return
@@ -39,15 +48,12 @@ async def initiative(ctx, *args):
     await ctx.send(f'ADDED {name} at position {number}')
 
 
-@bot.command(name='initorder')
-async def initiative_end(ctx):
-    taking_initiative = False
-    await ctx.send('HERE IS INITIATIVE ORDER')
-    sorted_initiative_order = dict(
-        sorted(initiative_order.items(), key=operator.itemgetter(1), reverse=True))
-    init_order_string = ""
-    for i in sorted_initiative_order:
-        init_order_string += f'{i}: {sorted_initiative_order[i]}\n'
-    await ctx.send(init_order_string)
+@bot.command(name='roll')
+async def roll(ctx, *args):
+    if len(args) < 1:
+        await ctx.send('ROLL WHAT?')
+        return
+    result, explanation = rolldice.roll_dice(''.join(args))
+    await ctx.send(f'YOU ROLLED {result} FROM {explanation}')
 
 bot.run(config['token'])
